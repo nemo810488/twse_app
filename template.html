@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>TWSE Broker Turnover Share</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);--bg:#0a0e17;--surface:#111827;--surface2:#1a2235;--border:#1e2d42;--accent:#00d4ff;--accent2:#00ff9d;--text:#e2e8f0;--muted:#64748b;--dim:#94a3b8}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:'IBM Plex Sans',system-ui,sans-serif;min-height:100vh;padding:20px}
+.wrap{max-width:1100px;margin:0 auto}
+header{display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px;margin-bottom:22px;padding-bottom:16px;border-bottom:1px solid var(--border)}
+h1{font-family:'IBM Plex Mono',monospace;font-size:20px;color:var(--accent)}
+.sub,.mono{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--muted);margin-top:4px}
+.controls{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:16px;display:flex;gap:14px;align-items:flex-end;flex-wrap:wrap;margin-bottom:20px}
+.cg{display:flex;flex-direction:column;gap:5px}
+label{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
+select{background:var(--surface2);border:1px solid var(--border);color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:13px;padding:8px 12px;border-radius:5px;outline:none;min-width:150px}
+select:focus{border-color:var(--accent)}
+.btn{padding:9px 16px;border-radius:5px;border:1px solid var(--accent2);background:transparent;color:var(--accent2);font-family:'IBM Plex Mono',monospace;font-size:12px;cursor:pointer;white-space:nowrap;margin-left:auto}
+.btn:hover{background:rgba(0,255,157,.08)}
+.btn.on{background:var(--accent2);color:#0a0e17}
+.summary{display:flex;gap:12px;margin-bottom:16px;flex-wrap:wrap}
+.sc{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:12px 16px;flex:1;min-width:120px}
+.sc-l{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px}
+.sc-v{font-family:'IBM Plex Mono',monospace;font-size:17px;font-weight:600;color:var(--accent)}
+.sc-s{font-size:11px;color:var(--muted);margin-top:2px}
+.tbl-wrap{background:var(--surface);border:1px solid var(--border);border-radius:8px;overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13px}
+thead tr{background:var(--surface2);border-bottom:1px solid var(--border)}
+th{padding:11px 14px;text-align:left;font-family:'IBM Plex Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);white-space:nowrap}
+th.r{text-align:right}
+td{padding:10px 14px;border-bottom:1px solid rgba(30,45,66,.5);color:var(--dim)}
+td.r{text-align:right;font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--text)}
+tbody tr:hover{background:rgba(0,212,255,.04)}
+tbody tr:last-child td{border-bottom:none}
+.rank{font-family:'IBM Plex Mono',monospace;font-weight:600}
+.r1{color:#ffd700}.r2{color:#c0c0c0}.r3{color:#cd7f32}.rx{color:var(--muted)}
+.bn{color:var(--text);font-weight:500}.bc{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--muted);margin-left:5px}
+.bar-w{display:flex;align-items:center;gap:8px;min-width:160px}
+.bar-bg{flex:1;height:5px;background:var(--border);border-radius:3px;overflow:hidden}
+.bar-f{height:100%;background:var(--accent);border-radius:3px}
+.pct{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--accent);min-width:44px;text-align:right}
+.state{padding:50px 20px;text-align:center;color:var(--muted);font-family:'IBM Plex Mono',monospace;font-size:13px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:16px;margin-bottom:16px}
+.card h2{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:12px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.card h2 span.t{color:var(--accent)}
+.chart{width:100%;overflow-x:auto}
+svg{display:block;width:100%;height:auto;font-family:'IBM Plex Mono',monospace}
+.axis{stroke:var(--border)} .grid{stroke:rgba(30,45,66,.6)} .lbl{fill:var(--muted);font-size:10px}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;max-height:120px;overflow-y:auto}
+.chip{font-family:'IBM Plex Mono',monospace;font-size:11px;padding:4px 10px;border-radius:14px;border:1px solid var(--border);color:var(--dim);cursor:pointer;background:var(--surface2);user-select:none}
+.chip.on{color:#0a0e17;border-color:transparent;font-weight:600}
+.seg.lang{margin-left:0;align-self:center}
+.seg{display:inline-flex;border:1px solid var(--border);border-radius:5px;overflow:hidden;margin-left:auto}
+.seg button{background:transparent;border:0;color:var(--dim);font-family:'IBM Plex Mono',monospace;font-size:11px;padding:5px 10px;cursor:pointer}
+.seg button.on{background:var(--accent);color:#0a0e17}
+.legend{display:flex;flex-wrap:wrap;gap:12px;margin-top:8px;font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--dim)}
+.legend i{display:inline-block;width:10px;height:3px;border-radius:2px;margin-right:5px;vertical-align:middle}
+
+.badge{font-family:'IBM Plex Mono',monospace;font-size:10px;padding:2px 7px;border-radius:3px;margin-left:6px;vertical-align:middle}
+.bB{background:rgba(0,212,255,.12);color:var(--accent)} .bP{background:rgba(255,107,53,.15);color:#ff6b35}
+</style></head>
+<body><div class="wrap">
+<header><div><h1 data-i="title">TWSE // BROKER TURNOVER</h1><div class="sub" id="sub"></div></div>
+<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+ <div class="seg lang" id="basis"><button data-b="m" class="on" data-i="month">Month</button><button data-b="y" data-i="ytd">YTD</button></div>
+ <div class="seg lang" id="langSeg"><button data-l="en" class="on">EN</button><button data-l="zh">繁中</button></div></div></header>
+<div class="controls">
+ <div class="cg"><label data-i="monthLbl">Month</label><select id="date"></select></div>
+ <div class="cg"><label data-i="view">View</label><select id="view"><option value="all" data-i="vAll">All (Brokerage + Prop)</option><option value="B" data-i="vB">Brokerage</option><option value="P" data-i="vP">Proprietary</option></select></div>
+ <button class="btn" id="trendBtn">📈 <span data-i="trend">TREND</span></button>
+</div>
+<div id="trend" style="display:none">
+ <div class="card"><h2><span data-i="totalTurn">Market turnover</span> · <span class="t" id="t1lbl"></span></h2><div class="chart" id="c1"></div></div>
+ <div class="card"><h2><span data-i="brokers">Brokers</span> · <span class="t" id="t2lbl"></span>
+   <div class="seg"><button data-m="share" class="on" data-i="sharePct">Share %</button><button data-m="volume" data-i="turnover">Turnover</button></div></h2>
+   <div class="chips" id="chips"></div><div class="chart" id="c2"></div><div class="legend" id="leg"></div></div>
+</div>
+<div id="content"></div>
+</div>
+<script id="data" type="application/json">__DATA__</script>
+<script>
+const D=JSON.parse(document.getElementById('data').textContent);
+const rows=D.rows; // [code,nameZh,ym,kind,amt,pct,ytdAmt,ytdPct]
+const EN={"102": "Taiwan Cooperative", "104": "Bank of Taiwan", "109": "IBT", "116": "Jih Sun", "126": "Horizon", "136": "Macquarie", "138": "KGI Taiwan Hui Li", "144": "Merrill Lynch", "147": "Morgan Stanley", "148": "Goldman Sachs", "152": "Credit Suisse", "153": "Deutsche Bank", "156": "Nomura", "157": "Societe Generale", "159": "Citigroup", "165": "UBS", "166": "CIMB", "218": "Oriental", "505": "Ta Chan", "511": "Fu Long", "526": "Mega Hwa", "532": "Kao Chiao", "538": "First Securities", "546": "Bao Sheng", "560": "Yung Shing", "566": "Jih Jin", "585": "President", "586": "Ying Yi", "587": "Kuang Lung", "592": "Masterlink", "596": "Jih Mao", "601": "Ben Ya", "611": "Taichung Bank", "616": "CTBC", "621": "Hsin Pai Wang", "638": "Kuang Ho", "645": "Yung Chuan", "646": "Ta Chang", "648": "Fu Pang", "653": "Ta Chung", "662": "Pocket (Chuan Tai)", "691": "Te Shin", "695": "Fu Sheng", "700": "Mega", "702": "Hsin Fu", "703": "Chih Ho", "707": "Feng Nung", "708": "Shih Chiao", "712": "Tai An", "767": "Jin Kang", "775": "Pei Cheng", "779": "IBF", "790": "Feng Te", "815": "Taishin", "838": "An Tai", "844": "J.P. Morgan", "845": "Concord", "849": "Wan Tai (KingsTown)", "852": "Chung Nung", "856": "Shin Kong", "866": "Wan Tung", "871": "Sunny Bank", "877": "Ta Ding", "884": "E.SUN", "885": "Hsin Feng", "888": "Cathay", "889": "Daiwa-Cathay", "890": "BNP Paribas", "891": "Barclays", "896": "HSBC", "910": "Capital", "920": "KGI", "930": "Hua Nan", "960": "Fubon", "980": "Yuanta", "9A0": "SinoPac", "9B0": "Taishin (ex-Masterlink)", "103": "Land Bank", "111": "Taiwan Business Bank", "123": "Chang Hwa Bank", "858": "Union Bank"};
+const dates=[...new Set(rows.map(r=>r[2]))].sort();
+const latestName={}; for(const r of rows) latestName[r[0]]=r[1];
+const fmt=d=>d.slice(0,4)+'-'+d.slice(4,6);
+const $=id=>document.getElementById(id);
+const COLORS=['#00d4ff','#00ff9d','#ff6b35','#ffd700','#c084fc','#f472b6','#60a5fa','#34d399','#fb923c','#a3e635','#e879f9','#fbbf24'];
+const I18N={en:{title:'TWSE // BROKER TURNOVER',month:'Month',ytd:'YTD',monthLbl:'Month',view:'View',vAll:'All (Brokerage + Prop)',vB:'Brokerage',vP:'Proprietary',trend:'TREND',totalTurn:'Market turnover',brokers:'Brokers',sharePct:'Share %',turnover:'Turnover',
+ snapshot:'DATA SNAPSHOT',months:'MONTHS',rank:'Rank',broker:'Broker',share:'Market share',total:'Turnover in view',top:'#1 Broker',active:'Brokers',participants:'listed',shareOf:'share',nodata:'No data',totalLine:'Market total',B:'Brokerage',P:'Prop',ytdTo:'YTD to',unit:'NT$ bn',mkt:'Market total',mktSub:'TWSE listed securities'},
+zh:{title:'證交所 // 證券商成交金額',month:'當月',ytd:'年初至今',monthLbl:'月份',view:'檢視',vAll:'全部（經紀＋自營）',vB:'經紀',vP:'自營',trend:'趨勢',totalTurn:'市場成交金額',brokers:'證券商',sharePct:'市占 %',turnover:'成交金額',
+ snapshot:'資料快照',months:'個月',rank:'排名',broker:'證券商',share:'市占率',total:'檢視內成交金額',top:'第一名',active:'證券商數',participants:'家',shareOf:'市占',nodata:'無資料',totalLine:'市場總計',B:'經紀',P:'自營',ytdTo:'年初至',unit:'億元',mkt:'市場總計',mktSub:'集中市場上市證券'}};
+let lang='en', basis='m', mode='share', trendOpen=false;
+const T=k=>I18N[lang][k];
+const bname=c=>lang==='zh'?latestName[c]:(EN[c]||latestName[c]);
+const money=(v,full)=>{ if(lang==='zh'){const y=v/1e8;return (full?y.toLocaleString(undefined,{maximumFractionDigits:1}):y>=1e4?(y/1e4).toFixed(1)+'兆':Math.round(y).toLocaleString())+(full?' 億':'億');}
+ const b=v/1e9;return 'NT$'+(full?b.toLocaleString(undefined,{maximumFractionDigits:1}):b>=1000?(b/1000).toFixed(1)+'tn':Math.round(b).toLocaleString())+(full?' bn':'bn');};
+const rc=r=>r===1?'r1':r===2?'r2':r===3?'r3':'rx';
+const AMT=()=>basis==='m'?4:6, PCT=()=>basis==='m'?5:7;
+const defaultSel=()=>{const d=dates[dates.length-1];return new Set(rows.filter(r=>r[2]===d&&r[3]==='B').sort((a,b)=>b[5]-a[5]).slice(0,3).map(r=>r[0]));};
+let selected=defaultSel();
+
+function applyLang(){document.documentElement.lang=lang==='zh'?'zh-Hant':'en';document.querySelectorAll('[data-i]').forEach(e=>e.textContent=T(e.dataset.i));
+ $('sub').textContent=T('snapshot')+' '+D.fetched+' · '+fmt(dates[0])+' → '+fmt(dates[dates.length-1])+' · '+dates.length+' '+T('months');}
+function filt(){const v=$('view').value;return v==='all'?{f:r=>true,label:T('vAll')}:{f:r=>r[3]===v,label:T(v==='B'?'vB':'vP')};}
+function rank(date,f){const a=AMT(),p=PCT(),m={};for(const r of rows)if(r[2]===date&&f(r)){const o=m[r[0]]||(m[r[0]]={code:r[0],volume:0,share:0,kinds:new Set()});o.volume+=r[a];o.share+=r[p];o.kinds.add(r[3]);}
+ const arr=Object.values(m).filter(x=>x.volume>0).sort((x,y)=>y.volume-x.volume);const total=arr.reduce((s,x)=>s+x.volume,0);return arr.map((x,i)=>({...x,name:bname(x.code),rank:i+1,total}));}
+function marketTotal(date){const a=AMT(),p=PCT();let amt=0,pct=0;for(const r of rows)if(r[2]===date){amt+=r[a];pct+=r[p];}return pct>0?amt/pct*100:0;}
+function render(data,label,date){if(!data.length){$('content').innerHTML='<div class="state">'+T('nodata')+'</div>';return;}
+ const t=data[0],mk=marketTotal(date),per=basis==='m'?fmt(date):T('ytdTo')+' '+fmt(date);
+ let h=`<div class="summary">
+ <div class="sc"><div class="sc-l">${T('view')}</div><div class="sc-v" style="font-size:14px">${label}</div><div class="sc-s">${per}</div></div>
+ <div class="sc"><div class="sc-l">${T('mkt')}</div><div class="sc-v">${money(mk,true)}</div><div class="sc-s">${T('mktSub')}</div></div>
+ <div class="sc"><div class="sc-l">${T('top')}</div><div class="sc-v" style="font-size:13px">${t.name}</div><div class="sc-s">${t.share.toFixed(2)}% ${T('shareOf')}</div></div>
+ <div class="sc"><div class="sc-l">${T('active')}</div><div class="sc-v">${data.length}</div><div class="sc-s">${T('participants')}</div></div></div>
+ <div class="tbl-wrap"><table><thead><tr><th style="width:56px">${T('rank')}</th><th>${T('broker')}</th><th class="r">${T('turnover')}</th><th style="min-width:200px">${T('share')}</th></tr></thead><tbody>`;
+ const mx=t.share||1;
+ for(const r of data){const badge=$('view').value==='all'?'':'';
+  h+=`<tr><td><span class="rank ${rc(r.rank)}">#${r.rank}</span></td><td><span class="bn">${r.name}</span><span class="bc">${r.code}</span>${[...r.kinds].length===1&&$('view').value==='all'?`<span class="badge b${[...r.kinds][0]}">${T([...r.kinds][0])}</span>`:''}</td><td class="r">${money(r.volume,true)}</td><td><div class="bar-w"><div class="bar-bg"><div class="bar-f" style="width:${r.share/mx*100}%"></div></div><span class="pct">${r.share.toFixed(2)}%</span></div></td></tr>`;}
+ $('content').innerHTML=h+'</tbody></table></div>';}
+
+function lineChart(el,series,yfmt){const W=1000,H=320,L=78,R=20,T0=16,B=44;const n=dates.length,xs=i=>L+(n===1?0:(W-L-R)*i/(n-1));
+ let vals=series.flatMap(s=>s.data).filter(v=>v!=null);if(!vals.length){el.innerHTML='<div class="state">'+T('nodata')+'</div>';return;}
+ let max=Math.max(...vals)*1.08||1,min=0;const ys=v=>T0+(H-T0-B)*(1-(v-min)/(max-min));
+ let g='';for(let k=0;k<=4;k++){const v=min+(max-min)*k/4,y=ys(v);g+=`<line class="grid" x1="${L}" x2="${W-R}" y1="${y}" y2="${y}"/><text class="lbl" x="${L-8}" y="${y+3}" text-anchor="end">${yfmt(v)}</text>`;}
+ const step=Math.max(1,Math.ceil(n/14));for(let i=0;i<n;i+=step)g+=`<text class="lbl" x="${xs(i)}" y="${H-B+18}" text-anchor="middle">${dates[i].slice(0,4)}/${dates[i].slice(4,6)}</text>`;
+ let p='';for(const s of series){let d='',open=false;s.data.forEach((v,i)=>{if(v==null){open=false;return;}d+=(open?'L':'M')+xs(i).toFixed(1)+' '+ys(v).toFixed(1);open=true;});
+  p+=`<path d="${d}" fill="none" stroke="${s.color}" stroke-width="2" stroke-linejoin="round"/>`;
+  s.data.forEach((v,i)=>{if(v!=null)p+=`<circle cx="${xs(i)}" cy="${ys(v)}" r="2.6" fill="${s.color}"><title>${s.name} · ${fmt(dates[i])} · ${yfmt(v,true)}</title></circle>`;});}
+ el.innerHTML=`<svg viewBox="0 0 ${W} ${H}" style="min-width:640px">${g}<line class="axis" x1="${L}" x2="${W-R}" y1="${H-B}" y2="${H-B}"/>${p}</svg>`;}
+const fmtP=(v,full)=>v.toFixed(full?2:1)+'%';
+
+function renderTrend(){const {f,label}=filt();$('t1lbl').textContent=label+(basis==='y'?' · '+T('ytd'):'');$('t2lbl').textContent=label;
+ const a=AMT(),p=PCT();const byDate={};for(const d of dates)byDate[d]={mkt:marketTotal(d),b:{},s:{}};
+ for(const r of rows)if(f(r)){const o=byDate[r[2]];o.b[r[0]]=(o.b[r[0]]||0)+r[a];o.s[r[0]]=(o.s[r[0]]||0)+r[p];}
+ lineChart($('c1'),[{name:T('totalLine'),color:'#00d4ff',data:dates.map(d=>byDate[d].mkt||null)}],money);
+ const tot={};for(const d of dates)for(const[c,v]of Object.entries(byDate[d].b))tot[c]=(tot[c]||0)+v;
+ const codes=Object.keys(tot).sort((x,y)=>tot[y]-tot[x]);
+ $('chips').innerHTML=codes.map(c=>{const on=selected.has(c);const col=COLORS[[...selected].indexOf(c)%COLORS.length];return`<span class="chip${on?' on':''}" data-c="${c}" style="${on?'background:'+col:''}">${bname(c)}</span>`;}).join('');
+ const sel=[...selected].filter(c=>codes.includes(c));
+ const series=sel.map((c,i)=>({name:bname(c),color:COLORS[i%COLORS.length],data:dates.map(d=>{const o=byDate[d];if(!(c in o.b))return null;return mode==='share'?o.s[c]:o.b[c];})}));
+ lineChart($('c2'),series,mode==='share'?fmtP:money);
+ $('leg').innerHTML=series.map(s=>`<span><i style="background:${s.color}"></i>${s.name}</span>`).join('');}
+
+$('date').innerHTML=dates.slice().reverse().map(d=>`<option value="${d}">${fmt(d)}</option>`).join('');
+$('chips').addEventListener('click',e=>{const c=e.target.dataset.c;if(!c)return;selected.has(c)?selected.delete(c):selected.add(c);renderTrend();});
+document.querySelectorAll('.seg:not(.lang) button').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('.seg:not(.lang) button').forEach(x=>x.classList.remove('on'));b.classList.add('on');mode=b.dataset.m;renderTrend();}));
+document.querySelectorAll('#basis button').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('#basis button').forEach(x=>x.classList.remove('on'));b.classList.add('on');basis=b.dataset.b;update();}));
+document.querySelectorAll('#langSeg button').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('#langSeg button').forEach(x=>x.classList.remove('on'));b.classList.add('on');lang=b.dataset.l;applyLang();update();}));
+$('trendBtn').addEventListener('click',()=>{trendOpen=!trendOpen;$('trend').style.display=trendOpen?'block':'none';$('trendBtn').classList.toggle('on',trendOpen);if(trendOpen)renderTrend();});
+function update(){const date=$('date').value,{f,label}=filt();render(rank(date,f),label,date);if(trendOpen)renderTrend();}
+['date','view'].forEach(id=>$(id).addEventListener('change',update));applyLang();update();
+</script></body></html>
