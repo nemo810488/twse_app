@@ -73,9 +73,10 @@ svg{display:block;width:100%;height:auto;font-family:'IBM Plex Mono',monospace}
  <button class="btn" id="trendBtn">📈 <span data-i="trend">TREND</span></button>
 </div>
 <div id="trend" style="display:none">
- <div class="card"><h2><span data-i="totalTurn">Market turnover</span> · <span class="t" id="t1lbl"></span></h2><div class="chart" id="c1"></div></div>
+ <div class="card"><h2><span data-i="totalTurn">Market turnover</span> · <span class="t" id="t1lbl"></span>
+   <div class="seg" id="seg1"><button data-m1="total" class="on" data-i="total_">Total</button><button data-m1="adv" data-i="advMode">ADV</button></div></h2><div class="chart" id="c1"></div></div>
  <div class="card"><h2><span data-i="brokers">Brokers</span> · <span class="t" id="t2lbl"></span>
-   <div class="seg"><button data-m="share" class="on" data-i="sharePct">Share %</button><button data-m="volume" data-i="turnover">Turnover</button></div></h2>
+   <div class="seg" id="seg2"><button data-m="share" class="on" data-i="sharePct">Share %</button><button data-m="volume" data-i="turnover">Turnover</button><button data-m="adv" data-i="advMode">ADV</button></div></h2>
    <div class="chips" id="chips"></div><div class="chart" id="c2"></div><div class="legend" id="leg"></div></div>
 </div>
 <div id="content"></div>
@@ -91,16 +92,17 @@ const fmt=d=>d.slice(0,4)+'-'+d.slice(4,6);
 const $=id=>document.getElementById(id);
 const COLORS=['#00d4ff','#00ff9d','#ff6b35','#ffd700','#c084fc','#f472b6','#60a5fa','#34d399','#fb923c','#a3e635','#e879f9','#fbbf24'];
 const I18N={en:{title:'TWSE // BROKER TURNOVER',month:'Month',ytd:'YTD',monthLbl:'Month',view:'View',vAll:'All (Brokerage + Prop)',vB:'Brokerage',vP:'Proprietary',trend:'TREND',totalTurn:'Market turnover',brokers:'Brokers',sharePct:'Share %',turnover:'Turnover',
- snapshot:'DATA SNAPSHOT',months:'MONTHS',rank:'Rank',broker:'Broker',share:'Market share',total:'Turnover in view',top:'#1 Broker',active:'Brokers',participants:'listed',shareOf:'share',nodata:'No data',totalLine:'Market total',B:'Brokerage only',P:'Prop only',ytdTo:'YTD to',unit:'NT$ bn',mkt:'Market total',mktSub:'TWSE listed securities'},
+ snapshot:'DATA SNAPSHOT',months:'MONTHS',rank:'Rank',broker:'Broker',share:'Market share',total:'Turnover in view',top:'#1 Broker',active:'Brokers',participants:'listed',shareOf:'share',nodata:'No data',totalLine:'Market total',B:'Brokerage only',P:'Prop only',ytdTo:'YTD to',unit:'NT$ bn',mkt:'Market total',mktSub:'TWSE listed securities',days:'Trading days',daysSub:'actual sessions',adv:'Market ADV',advSub:'per trading day',advCol:'ADV',total_:'Total',advMode:'ADV'},
 zh:{title:'證交所 // 證券商成交金額',month:'當月',ytd:'年初至今',monthLbl:'月份',view:'檢視',vAll:'全部（經紀＋自營）',vB:'經紀',vP:'自營',trend:'趨勢',totalTurn:'市場成交金額',brokers:'證券商',sharePct:'市占 %',turnover:'成交金額',
- snapshot:'資料快照',months:'個月',rank:'排名',broker:'證券商',share:'市占率',total:'檢視內成交金額',top:'第一名',active:'證券商數',participants:'家',shareOf:'市占',nodata:'無資料',totalLine:'市場總計',B:'僅經紀',P:'僅自營',ytdTo:'年初至',unit:'億元',mkt:'市場總計',mktSub:'集中市場上市證券'}};
-let lang='en', basis='m', mode='share', trendOpen=false;
+ snapshot:'資料快照',months:'個月',rank:'排名',broker:'證券商',share:'市占率',total:'檢視內成交金額',top:'第一名',active:'證券商數',participants:'家',shareOf:'市占',nodata:'無資料',totalLine:'市場總計',B:'僅經紀',P:'僅自營',ytdTo:'年初至',unit:'億元',mkt:'市場總計',mktSub:'集中市場上市證券',days:'交易日數',daysSub:'實際開市日',adv:'市場日均',advSub:'每交易日',advCol:'日均',total_:'總計',advMode:'日均'}};
+let lang='en', basis='m', mode='share', mode1='total', trendOpen=false;
 const T=k=>I18N[lang][k];
 const bname=c=>lang==='zh'?latestName[c]:(EN[c]||latestName[c]);
 const money=(v,full)=>{ if(lang==='zh'){const y=v/1e8;return (full?y.toLocaleString(undefined,{maximumFractionDigits:1}):y>=1e4?(y/1e4).toFixed(1)+'兆':Math.round(y).toLocaleString())+(full?' 億':'億');}
  const b=v/1e9;return 'NT$'+(full?b.toLocaleString(undefined,{maximumFractionDigits:1}):b>=1000?(b/1000).toFixed(1)+'tn':Math.round(b).toLocaleString())+(full?' bn':'bn');};
 const rc=r=>r===1?'r1':r===2?'r2':r===3?'r3':'rx';
 const AMT=()=>basis==='m'?4:6, PCT=()=>basis==='m'?5:7;
+const tdays=d=>{if(basis==='m')return D.days[d]||0;let s=0;for(const x of dates)if(x.slice(0,4)===d.slice(0,4)&&x<=d)s+=D.days[x]||0;return s;};
 const defaultSel=()=>{const d=dates[dates.length-1];return new Set(rows.filter(r=>r[2]===d&&r[3]==='B').sort((a,b)=>b[5]-a[5]).slice(0,3).map(r=>r[0]));};
 let selected=defaultSel();
 
@@ -111,16 +113,18 @@ function rank(date,f){const a=AMT(),p=PCT(),m={};for(const r of rows)if(r[2]===d
  const arr=Object.values(m).filter(x=>x.volume>0).sort((x,y)=>y.volume-x.volume);const total=arr.reduce((s,x)=>s+x.volume,0);return arr.map((x,i)=>({...x,name:bname(x.code),rank:i+1,total}));}
 function marketTotal(date){const a=AMT(),p=PCT();let amt=0,pct=0;for(const r of rows)if(r[2]===date){amt+=r[a];pct+=r[p];}return pct>0?amt/pct*100:0;}
 function render(data,label,date){if(!data.length){$('content').innerHTML='<div class="state">'+T('nodata')+'</div>';return;}
- const t=data[0],mk=marketTotal(date),per=basis==='m'?fmt(date):T('ytdTo')+' '+fmt(date);
+ const t=data[0],mk=marketTotal(date),td=tdays(date),per=basis==='m'?fmt(date):T('ytdTo')+' '+fmt(date);
  let h=`<div class="summary">
  <div class="sc"><div class="sc-l">${T('view')}</div><div class="sc-v" style="font-size:14px">${label}</div><div class="sc-s">${per}</div></div>
  <div class="sc"><div class="sc-l">${T('mkt')}</div><div class="sc-v">${money(mk,true)}</div><div class="sc-s">${T('mktSub')}</div></div>
+ <div class="sc"><div class="sc-l">${T('adv')}</div><div class="sc-v">${money(td?mk/td:0,true)}</div><div class="sc-s">${T('advSub')}</div></div>
+ <div class="sc"><div class="sc-l">${T('days')}</div><div class="sc-v">${td}</div><div class="sc-s">${T('daysSub')}</div></div>
  <div class="sc"><div class="sc-l">${T('top')}</div><div class="sc-v" style="font-size:13px">${t.name}</div><div class="sc-s">${t.share.toFixed(2)}% ${T('shareOf')}</div></div>
  <div class="sc"><div class="sc-l">${T('active')}</div><div class="sc-v">${data.length}</div><div class="sc-s">${T('participants')}</div></div></div>
- <div class="tbl-wrap"><table><thead><tr><th style="width:56px">${T('rank')}</th><th>${T('broker')}</th><th class="r">${T('turnover')}</th><th style="min-width:200px">${T('share')}</th></tr></thead><tbody>`;
+ <div class="tbl-wrap"><table><thead><tr><th style="width:56px">${T('rank')}</th><th>${T('broker')}</th><th class="r">${T('turnover')}</th><th class="r">${T('advCol')}</th><th style="min-width:200px">${T('share')}</th></tr></thead><tbody>`;
  const mx=t.share||1;
  for(const r of data){const badge=$('view').value==='all'?'':'';
-  h+=`<tr><td><span class="rank ${rc(r.rank)}">#${r.rank}</span></td><td><span class="bn">${r.name}</span><span class="bc">${r.code}</span>${[...r.kinds].length===1&&$('view').value==='all'?`<span class="badge b${[...r.kinds][0]}">${T([...r.kinds][0])}</span>`:''}</td><td class="r">${money(r.volume,true)}</td><td><div class="bar-w"><div class="bar-bg"><div class="bar-f" style="width:${r.share/mx*100}%"></div></div><span class="pct">${r.share.toFixed(2)}%</span></div></td></tr>`;}
+  h+=`<tr><td><span class="rank ${rc(r.rank)}">#${r.rank}</span></td><td><span class="bn">${r.name}</span><span class="bc">${r.code}</span>${[...r.kinds].length===1&&$('view').value==='all'?`<span class="badge b${[...r.kinds][0]}">${T([...r.kinds][0])}</span>`:''}</td><td class="r">${money(r.volume,true)}</td><td class="r" style="color:var(--dim)">${money(td?r.volume/td:0,true)}</td><td><div class="bar-w"><div class="bar-bg"><div class="bar-f" style="width:${r.share/mx*100}%"></div></div><span class="pct">${r.share.toFixed(2)}%</span></div></td></tr>`;}
  $('content').innerHTML=h+'</tbody></table></div>';}
 
 function lineChart(el,series,yfmt){const W=1000,H=320,L=78,R=20,T0=16,B=44;const n=dates.length,xs=i=>L+(n===1?0:(W-L-R)*i/(n-1));
@@ -137,18 +141,19 @@ const fmtP=(v,full)=>v.toFixed(full?2:1)+'%';
 function renderTrend(){const {f,label}=filt();$('t1lbl').textContent=label+(basis==='y'?' · '+T('ytd'):'');$('t2lbl').textContent=label;
  const a=AMT(),p=PCT();const byDate={};for(const d of dates)byDate[d]={mkt:marketTotal(d),b:{},s:{}};
  for(const r of rows)if(f(r)){const o=byDate[r[2]];o.b[r[0]]=(o.b[r[0]]||0)+r[a];o.s[r[0]]=(o.s[r[0]]||0)+r[p];}
- lineChart($('c1'),[{name:T('totalLine'),color:'#00d4ff',data:dates.map(d=>byDate[d].mkt||null)}],money);
+ lineChart($('c1'),[{name:T('totalLine')+(mode1==='adv'?' '+T('advMode'):''),color:'#00d4ff',data:dates.map(d=>{const v=byDate[d].mkt;if(!v)return null;return mode1==='adv'?v/(tdays(d)||1):v;})}],money);
  const tot={};for(const d of dates)for(const[c,v]of Object.entries(byDate[d].b))tot[c]=(tot[c]||0)+v;
  const codes=Object.keys(tot).sort((x,y)=>tot[y]-tot[x]);
  $('chips').innerHTML=codes.map(c=>{const on=selected.has(c);const col=COLORS[[...selected].indexOf(c)%COLORS.length];return`<span class="chip${on?' on':''}" data-c="${c}" style="${on?'background:'+col:''}">${bname(c)}</span>`;}).join('');
  const sel=[...selected].filter(c=>codes.includes(c));
- const series=sel.map((c,i)=>({name:bname(c),color:COLORS[i%COLORS.length],data:dates.map(d=>{const o=byDate[d];if(!(c in o.b))return null;return mode==='share'?o.s[c]:o.b[c];})}));
+ const series=sel.map((c,i)=>({name:bname(c),color:COLORS[i%COLORS.length],data:dates.map(d=>{const o=byDate[d];if(!(c in o.b))return null;return mode==='share'?o.s[c]:mode==='adv'?o.b[c]/(tdays(d)||1):o.b[c];})}));
  lineChart($('c2'),series,mode==='share'?fmtP:money);
  $('leg').innerHTML=series.map(s=>`<span><i style="background:${s.color}"></i>${s.name}</span>`).join('');}
 
 $('date').innerHTML=dates.slice().reverse().map(d=>`<option value="${d}">${fmt(d)}</option>`).join('');
 $('chips').addEventListener('click',e=>{const c=e.target.dataset.c;if(!c)return;selected.has(c)?selected.delete(c):selected.add(c);renderTrend();});
-document.querySelectorAll('.seg:not(.lang) button').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('.seg:not(.lang) button').forEach(x=>x.classList.remove('on'));b.classList.add('on');mode=b.dataset.m;renderTrend();}));
+document.querySelectorAll('#seg2 button').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('#seg2 button').forEach(x=>x.classList.remove('on'));b.classList.add('on');mode=b.dataset.m;renderTrend();}));
+document.querySelectorAll('#seg1 button').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('#seg1 button').forEach(x=>x.classList.remove('on'));b.classList.add('on');mode1=b.dataset.m1;renderTrend();}));
 document.querySelectorAll('#basis button').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('#basis button').forEach(x=>x.classList.remove('on'));b.classList.add('on');basis=b.dataset.b;update();}));
 document.querySelectorAll('#langSeg button').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('#langSeg button').forEach(x=>x.classList.remove('on'));b.classList.add('on');lang=b.dataset.l;applyLang();update();}));
 $('trendBtn').addEventListener('click',()=>{trendOpen=!trendOpen;$('trend').style.display=trendOpen?'block':'none';$('trendBtn').classList.toggle('on',trendOpen);if(trendOpen)renderTrend();});

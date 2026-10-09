@@ -1,10 +1,12 @@
 """Fetch TWSE 證券商成交金額表 (monthly broker turnover) for a rolling 10 years
 and build site/index.html. Only broker-level rows are kept: code ending '*'
 (brokerage total) and 'T' (proprietary desk); branch rows are dropped."""
-import io, json, os, zipfile, datetime, urllib.request
+import io, json, os, zipfile, datetime, time, urllib.request
 import xlrd
 
 BASE = "https://www.twse.com.tw/staticFiles/inspection/inspection/03/003/{ym}_C03003.zip"
+# Daily market summary: one row per actual trading day -> authoritative trading-day count
+DAYS = "https://www.twse.com.tw/rwd/zh/afterTrading/FMTQIK?date={ym}01&response=json"
 YEARS_BACK = 10
 
 def fetch(url):
@@ -52,11 +54,27 @@ for ym in months():
     if r:
         all_rows += r; got.append(ym)
 
+# trading days per month (actual sessions, so typhoon / holiday closures are reflected)
+tdays = {}
+for ym in got:
+    for attempt in range(3):
+        try:
+            j = json.loads(fetch(DAYS.format(ym=ym)).decode("utf-8"))
+            if j.get("stat") == "OK" and j.get("data"):
+                tdays[ym] = len(j["data"]); break
+        except Exception as e:
+            print(f"days {ym} attempt {attempt+1}: {str(e)[:50]}")
+        time.sleep(2)
+    time.sleep(0.7)   # be polite to TWSE
+missing = [ym for ym in got if ym not in tdays]
+if missing:
+    raise SystemExit(f"Missing trading-day counts for {missing} - aborting so the old site stays up")
+
 if len(got) < 12:
     raise SystemExit("Too little data fetched - aborting so the old site stays up")
 
 tw_today = (datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(hours=8)).date().isoformat()
-data = json.dumps({"rows": all_rows, "fetched": tw_today}, ensure_ascii=False, separators=(",", ":"))
+data = json.dumps({"rows": all_rows, "days": tdays, "fetched": tw_today}, ensure_ascii=False, separators=(",", ":"))
 template = open("template.html", encoding="utf-8").read()
 os.makedirs("site", exist_ok=True)
 open("site/index.html", "w", encoding="utf-8").write(template.replace("__DATA__", data))
