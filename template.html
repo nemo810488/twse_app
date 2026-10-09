@@ -91,9 +91,9 @@ const fmt=d=>d.slice(0,4)+'-'+d.slice(4,6);
 const $=id=>document.getElementById(id);
 const COLORS=['#00d4ff','#00ff9d','#ff6b35','#ffd700','#c084fc','#f472b6','#60a5fa','#34d399','#fb923c','#a3e635','#e879f9','#fbbf24'];
 const I18N={en:{title:'TWSE // BROKER TURNOVER',month:'Month',ytd:'YTD',monthLbl:'Month',view:'View',vAll:'All (Brokerage + Prop)',vB:'Brokerage',vP:'Proprietary',trend:'TREND',totalTurn:'Market turnover',brokers:'Brokers',sharePct:'Share %',turnover:'Turnover',
- snapshot:'DATA SNAPSHOT',months:'MONTHS',rank:'Rank',broker:'Broker',share:'Market share',total:'Turnover in view',top:'#1 Broker',active:'Brokers',participants:'listed',shareOf:'share',nodata:'No data',totalLine:'Market total',B:'Brokerage',P:'Prop',ytdTo:'YTD to',unit:'NT$ bn',mkt:'Market total',mktSub:'TWSE listed securities'},
+ snapshot:'DATA SNAPSHOT',months:'MONTHS',rank:'Rank',broker:'Broker',share:'Market share',total:'Turnover in view',top:'#1 Broker',active:'Brokers',participants:'listed',shareOf:'share',nodata:'No data',totalLine:'Market total',B:'Brokerage only',P:'Prop only',ytdTo:'YTD to',unit:'NT$ bn',mkt:'Market total',mktSub:'TWSE listed securities'},
 zh:{title:'證交所 // 證券商成交金額',month:'當月',ytd:'年初至今',monthLbl:'月份',view:'檢視',vAll:'全部（經紀＋自營）',vB:'經紀',vP:'自營',trend:'趨勢',totalTurn:'市場成交金額',brokers:'證券商',sharePct:'市占 %',turnover:'成交金額',
- snapshot:'資料快照',months:'個月',rank:'排名',broker:'證券商',share:'市占率',total:'檢視內成交金額',top:'第一名',active:'證券商數',participants:'家',shareOf:'市占',nodata:'無資料',totalLine:'市場總計',B:'經紀',P:'自營',ytdTo:'年初至',unit:'億元',mkt:'市場總計',mktSub:'集中市場上市證券'}};
+ snapshot:'資料快照',months:'個月',rank:'排名',broker:'證券商',share:'市占率',total:'檢視內成交金額',top:'第一名',active:'證券商數',participants:'家',shareOf:'市占',nodata:'無資料',totalLine:'市場總計',B:'僅經紀',P:'僅自營',ytdTo:'年初至',unit:'億元',mkt:'市場總計',mktSub:'集中市場上市證券'}};
 let lang='en', basis='m', mode='share', trendOpen=false;
 const T=k=>I18N[lang][k];
 const bname=c=>lang==='zh'?latestName[c]:(EN[c]||latestName[c]);
