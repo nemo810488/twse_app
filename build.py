@@ -11,7 +11,7 @@ YEARS_BACK = 10
 
 def fetch(url):
     req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
-    with urllib.request.urlopen(req, timeout=90) as r:
+    with urllib.request.urlopen(req, timeout=30) as r:
         return r.read()
 
 def months():
@@ -54,21 +54,26 @@ for ym in months():
     if r:
         all_rows += r; got.append(ym)
 
-# trading days per month (actual sessions, so typhoon / holiday closures are reflected)
-tdays = {}
-for ym in got:
+# trading days per month (actual sessions, so typhoon / holiday closures are reflected).
+# Cached in days.json so TWSE is only asked about months we don't have yet.
+try:
+    tdays = json.load(open("days.json", encoding="utf-8"))
+except FileNotFoundError:
+    tdays = {}
+tdays = {k: v for k, v in tdays.items() if k in got}          # drop months that rolled off
+for ym in [m for m in got if m not in tdays]:
     for attempt in range(3):
         try:
             j = json.loads(fetch(DAYS.format(ym=ym)).decode("utf-8"))
             if j.get("stat") == "OK" and j.get("data"):
-                tdays[ym] = len(j["data"]); break
+                tdays[ym] = len(j["data"]); print(f"days {ym}: {tdays[ym]}"); break
         except Exception as e:
             print(f"days {ym} attempt {attempt+1}: {str(e)[:50]}")
-        time.sleep(2)
-    time.sleep(0.7)   # be polite to TWSE
-missing = [ym for ym in got if ym not in tdays]
-if missing:
-    raise SystemExit(f"Missing trading-day counts for {missing} - aborting so the old site stays up")
+        time.sleep(5)
+    else:
+        print(f"days {ym}: not available yet - ADV will show as n/a until next run")
+    time.sleep(3)
+json.dump(dict(sorted(tdays.items())), open("days.json", "w", encoding="utf-8"), indent=0)
 
 if len(got) < 12:
     raise SystemExit("Too little data fetched - aborting so the old site stays up")

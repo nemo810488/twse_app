@@ -108,7 +108,7 @@ const money=(v,full)=>{ if(lang==='zh'){const y=v/1e8;return (full?y.toLocaleStr
  const b=v/1e9;return 'NT$'+(full?b.toLocaleString(undefined,{maximumFractionDigits:1}):b>=1000?(b/1000).toFixed(1)+'tn':Math.round(b).toLocaleString())+(full?' bn':'bn');};
 const rc=r=>r===1?'r1':r===2?'r2':r===3?'r3':'rx';
 const AMT=()=>basis==='m'?4:6, PCT=()=>basis==='m'?5:7;
-const tdays=d=>{if(basis==='m')return D.days[d]||0;let s=0;for(const x of dates)if(x.slice(0,4)===d.slice(0,4)&&x<=d)s+=D.days[x]||0;return s;};
+const tdays=d=>{if(basis==='m')return D.days[d]||0;let s=0;for(const x of dates)if(x.slice(0,4)===d.slice(0,4)&&x<=d){if(!D.days[x])return 0;s+=D.days[x];}return s;};
 const defaultSel=()=>{const d=dates[dates.length-1];return new Set(rows.filter(r=>r[2]===d&&r[3]==='B').sort((a,b)=>b[5]-a[5]).slice(0,3).map(r=>r[0]));};
 let selected=defaultSel();
 
@@ -123,14 +123,14 @@ function render(data,label,date){if(!data.length){$('content').innerHTML='<div c
  let h=`<div class="summary">
  <div class="sc"><div class="sc-l">${T('view')}</div><div class="sc-v" style="font-size:14px">${label}</div><div class="sc-s">${per}</div></div>
  <div class="sc"><div class="sc-l">${T('mkt')}</div><div class="sc-v">${money(mk,true)}</div><div class="sc-s">${T('mktSub')}</div></div>
- <div class="sc"><div class="sc-l">${T('adv')}</div><div class="sc-v">${money(td?mk/td:0,true)}</div><div class="sc-s">${T('advSub')}</div></div>
- <div class="sc"><div class="sc-l">${T('days')}</div><div class="sc-v">${td}</div><div class="sc-s">${T('daysSub')}</div></div>
+ <div class="sc"><div class="sc-l">${T('adv')}</div><div class="sc-v">${td?money(mk/td,true):'—'}</div><div class="sc-s">${T('advSub')}</div></div>
+ <div class="sc"><div class="sc-l">${T('days')}</div><div class="sc-v">${td||'—'}</div><div class="sc-s">${T('daysSub')}</div></div>
  <div class="sc"><div class="sc-l">${T('top')}</div><div class="sc-v" style="font-size:13px">${t.name}</div><div class="sc-s">${t.share.toFixed(2)}% ${T('shareOf')}</div></div>
  <div class="sc"><div class="sc-l">${T('active')}</div><div class="sc-v">${data.length}</div><div class="sc-s">${T('participants')}</div></div></div>
  <div class="tbl-wrap"><table><thead><tr><th style="width:56px">${T('rank')}</th><th>${T('broker')}</th><th class="r">${T('turnover')}</th><th class="r">${T('advCol')}</th><th style="min-width:200px">${T('share')}</th></tr></thead><tbody>`;
  const mx=t.share||1;
  for(const r of data){const badge=$('view').value==='all'?'':'';
-  h+=`<tr><td><span class="rank ${rc(r.rank)}">#${r.rank}</span></td><td><span class="bn">${r.name}</span><span class="bc">${r.code}</span>${[...r.kinds].length===1&&$('view').value==='all'?`<span class="badge b${[...r.kinds][0]}">${T([...r.kinds][0])}</span>`:''}</td><td class="r">${money(r.volume,true)}</td><td class="r" style="color:var(--dim)">${money(td?r.volume/td:0,true)}</td><td><div class="bar-w"><div class="bar-bg"><div class="bar-f" style="width:${r.share/mx*100}%"></div></div><span class="pct">${r.share.toFixed(2)}%</span></div></td></tr>`;}
+  h+=`<tr><td><span class="rank ${rc(r.rank)}">#${r.rank}</span></td><td><span class="bn">${r.name}</span><span class="bc">${r.code}</span>${[...r.kinds].length===1&&$('view').value==='all'?`<span class="badge b${[...r.kinds][0]}">${T([...r.kinds][0])}</span>`:''}</td><td class="r">${money(r.volume,true)}</td><td class="r" style="color:var(--dim)">${td?money(r.volume/td,true):'—'}</td><td><div class="bar-w"><div class="bar-bg"><div class="bar-f" style="width:${r.share/mx*100}%"></div></div><span class="pct">${r.share.toFixed(2)}%</span></div></td></tr>`;}
  $('content').innerHTML=h+'</tbody></table></div>';}
 
 function lineChart(el,series,yfmt){const W=1000,H=320,L=78,R=20,T0=16,B=44;const n=dates.length,xs=i=>L+(n===1?0:(W-L-R)*i/(n-1));
@@ -147,12 +147,12 @@ const fmtP=(v,full)=>v.toFixed(full?2:1)+'%';
 function renderTrend(){const {f,label}=filt();$('t1lbl').textContent=label+(basis==='y'?' · '+T('ytd'):'');$('t2lbl').textContent=label;
  const a=AMT(),p=PCT();const byDate={};for(const d of dates)byDate[d]={mkt:marketTotal(d),b:{},s:{}};
  for(const r of rows)if(f(r)){const o=byDate[r[2]];o.b[r[0]]=(o.b[r[0]]||0)+r[a];o.s[r[0]]=(o.s[r[0]]||0)+r[p];}
- lineChart($('c1'),[{name:T('totalLine')+(mode1==='adv'?' '+T('advMode'):''),color:'#00d4ff',data:dates.map(d=>{const v=byDate[d].mkt;if(!v)return null;return mode1==='adv'?v/(tdays(d)||1):v;})}],money);
+ lineChart($('c1'),[{name:T('totalLine')+(mode1==='adv'?' '+T('advMode'):''),color:'#00d4ff',data:dates.map(d=>{const v=byDate[d].mkt;if(!v)return null;return mode1==='adv'?(tdays(d)?v/tdays(d):null):v;})}],money);
  const tot={};for(const d of dates)for(const[c,v]of Object.entries(byDate[d].b))tot[c]=(tot[c]||0)+v;
  const codes=Object.keys(tot).sort((x,y)=>tot[y]-tot[x]);
  $('chips').innerHTML=codes.map(c=>{const on=selected.has(c);const col=COLORS[[...selected].indexOf(c)%COLORS.length];return`<span class="chip${on?' on':''}" data-c="${c}" style="${on?'background:'+col:''}">${bname(c)}</span>`;}).join('');
  const sel=[...selected].filter(c=>codes.includes(c));
- const series=sel.map((c,i)=>({name:bname(c),color:COLORS[i%COLORS.length],data:dates.map(d=>{const o=byDate[d];if(!(c in o.b))return null;return mode==='share'?o.s[c]:mode==='adv'?o.b[c]/(tdays(d)||1):o.b[c];})}));
+ const series=sel.map((c,i)=>({name:bname(c),color:COLORS[i%COLORS.length],data:dates.map(d=>{const o=byDate[d];if(!(c in o.b))return null;return mode==='share'?o.s[c]:mode==='adv'?(tdays(d)?o.b[c]/tdays(d):null):o.b[c];})}));
  lineChart($('c2'),series,mode==='share'?fmtP:money);
  $('leg').innerHTML=series.map(s=>`<span><i style="background:${s.color}"></i>${s.name}</span>`).join('');}
 
